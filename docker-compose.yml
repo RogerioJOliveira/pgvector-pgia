@@ -11,7 +11,7 @@ services:
   vectorizer-worker:
     image: timescale/pgai-vectorizer-worker:latest
     environment:
-      PGAI_VECTORIZER_WORKER_DB_URL: postgres://geneseslabs:geneseslabs@db:5432/geneseslabs
+      PGAI_VECTORIZER_WORKER_DB_URL: postgres://geneseslabs:geneseslabs@db:5499/geneseslabs
       OLLAMA_HOST: http://ollama:11434
     command: [ "--poll-interval", "5s" ]
   ollama:
