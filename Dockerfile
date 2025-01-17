@@ -15,9 +15,9 @@ RUN git clone https://github.com/pgvector/pgvector.git
 RUN git clone https://github.com/timescale/pgai.git
 
 WORKDIR /tmp/pgvector
-RUN make
+#RUN make
 RUN make install
 
 WORKDIR /tmp/pgai
-RUN make
+#RUN make
 RUN make install
