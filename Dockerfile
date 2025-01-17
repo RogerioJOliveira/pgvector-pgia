@@ -1,34 +1,45 @@
-FROM postgres:16.3
+# Dockerfile para PostgreSQL com extensões pgvector, pgai e pg_search
 
-# Instala dependências necessárias
-RUN apt-get update && apt-get install --no-install-recommends -y \
-   build-essential \
-   git \
-   postgresql-server-dev-all \
-   python3.11 \
-   python3-pip -y \
-   postgresql-plpython3-16 \
-   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
-   && rm -rf /var/lib/apt/lists/*
+# Usa PostgreSQL 17.2 como imagem base
+FROM postgres:17.2
 
-# Definindo variáveis de ambiente para diretórios temporários
-ARG WORKDIR=/tmp
-ARG PGVECTOR=/tmp/pgvector
-ARG PGAI=/tmp/pgai
+# Instala pacotes necessários:
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    git \
+    postgresql-server-dev-all \
+    python3.11 \
+    python3-pip \
+    postgresql-plpython3-17 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* 
 
-# Definindo o diretório de trabalho
-WORKDIR ${WORKDIR}
+# Instala a ferramenta 'just' para execução de comandos
+RUN mkdir -p /usr/local/bin && \
+    curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
 
-# Clonando o repositório pgvector e pgai
+# Clona os repositórios pgvector (para vetores) e pgai (para IA)
+WORKDIR /tmp
 RUN git clone https://github.com/pgvector/pgvector.git
-RUN git clone --branch v0.3.0 https://github.com/timescale/pgai.git ${PGAI}
+RUN git clone https://github.com/timescale/pgai.git --branch extension-0.6.0
 
-# Compilação e instalação do pgvector
-WORKDIR ${PGVECTOR}
-RUN ls -la ${PGVECTOR} && git pull origin master && make
-RUN make install
-
-# Compilação e instalação do pgai
-WORKDIR ${PGAI}
+# Compila e instala pgvector
+WORKDIR /tmp/pgvector
 RUN make
 RUN make install
+
+# Instala a extensão pgai
+WORKDIR /tmp/pgai
+RUN just ext install
+
+# Instala dependências para pg_search:
+RUN apt-get update && apt-get install -y rpm libicu-dev
+
+# Instala pg_search via pacote RPM pré-compilado para PostgreSQL 17
+RUN curl -LO https://github.com/paradedb/paradedb/releases/download/v0.13.2/pg_search_17-0.13.2-1PARADEDB.el8.aarch64.rpm \
+    && rpm -ivh --nodeps pg_search_17-0.13.2-1PARADEDB.el8.aarch64.rpm
+
+# Configura o pg_search para ser carregado ao iniciar o PostgreSQL
+RUN echo "shared_preload_libraries = 'pg_search'" >> /usr/share/postgresql/postgresql.conf.sample
+
