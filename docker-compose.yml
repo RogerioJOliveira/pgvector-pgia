@@ -9,7 +9,7 @@ services:
     ports:
       - "5499:5432"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - ./17/postgres_data:/var/lib/postgresql/data
       - ./activate-extension.sql:/docker-entrypoint-initdb.d/0-activate_extension.sql
     environment:
       - POSTGRES_USER=geneseslabs
