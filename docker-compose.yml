@@ -1,7 +1,7 @@
 name: pgai
 services:
   db:
-    image: timescale/timescaledb-ha:pg17
+    image: pgvector/pgvector:pg17
     environment:
       - POSTGRES_USER=geneseslabs
       - POSTGRES_PASSWORD=geneseslabs
@@ -10,13 +10,5 @@ services:
       - "5499:5432"
     volumes:
       - data:/var/lib/postgresql/data
-  vectorizer-worker:
-    image: timescale/pgai-vectorizer-worker:latest
-    environment:
-      PGAI_VECTORIZER_WORKER_DB_URL: postgres://geneseslabs:geneseslabs@db:5499/geneseslabs
-      OLLAMA_HOST: http://ollama:11434
-    command: [ "--poll-interval", "5s" ]
-  ollama:
-    image: ollama/ollama
 volumes:
   data:
