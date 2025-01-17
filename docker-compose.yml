@@ -1,17 +1,20 @@
-version: "3"
-name: postgres-ai
+name: pgai
 services:
-  postgres:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: postgres-ai:v1
+  db:
+    image: timescale/timescaledb-ha:pg17
+    environment:
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5499:5432"
     volumes:
-      - ./17/postgres_data:/var/lib/postgresql/data
-      - ./activate-extension.sql:/docker-entrypoint-initdb.d/0-activate_extension.sql
+      - data:/var/lib/postgresql/data
+  vectorizer-worker:
+    image: timescale/pgai-vectorizer-worker:latest
     environment:
-      - POSTGRES_USER=geneseslabs
-      - POSTGRES_PASSWORD=geneseslabs
-      - POSTGRES_DB=geneseslabs
+      PGAI_VECTORIZER_WORKER_DB_URL: postgres://geneseslabs:geneseslabs@db:5432/geneseslabs
+      OLLAMA_HOST: http://ollama:11434
+    command: [ "--poll-interval", "5s" ]
+  ollama:
+    image: ollama/ollama
+volumes:
+  data:
